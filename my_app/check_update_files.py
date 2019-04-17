@@ -1,13 +1,18 @@
 from my_app.settings import app_cfg, init_settings
+from my_app.func_lib.push_list_to_xls import push_list_to_xls
 import os
 import xlrd
 
 
-def prep_files():
+def prep_raw_files():
+    bookings = []
+    start_row = 2
+    wb = xlrd.open_workbook(file_path)
+    ws = wb.sheet_by_index(0)
+    for row in range(start_row, ws.nrows):
+        bookings.append(ws.row_values(row))
 
-
-
-
+    push_list_to_xls(bookings, 'tmp_working_bookings', 'updates')
     return
 
 
@@ -22,7 +27,12 @@ def check_update_files(run_dir=app_cfg['UPDATES_DIR']):
     path_to_updates = (os.path.join(home, working_dir, update_dir))
     path_to_archives = (os.path.join(home, working_dir, archive_dir))
 
-    update_files = os.listdir(path_to_updates)
+    if os.listdir(path_to_updates) == []:
+        print("yes")
+    else:
+        print("no")
+        update_files = os.listdir(path_to_updates)
+
     bookings = []
     start_row = 0
     as_of_date = ''
@@ -48,18 +58,21 @@ def check_update_files(run_dir=app_cfg['UPDATES_DIR']):
     # Ok run dir exists check for files needed to run
     run_files = os.listdir(path_to_run_dir)
     date_list = []
+    file_list = []
     for run_file in run_files:
         # Ignore tmp_files
         if run_file[0:4] != 'tmp_':
             print(run_file)
             date_list.append((run_file[-13:-13 + 8]))
             file_path = (os.path.join(path_to_run_dir, run_file))
-            my_wb = xlrd.open_workbook(file_path)
+            file_list.append(file_path)
+            # my_wb = xlrd.open_workbook(file_path)
             # my_sheet = my_wb.sheet_by_index(1)
-            print("Sheets", len(my_wb.sheet_names()))
+            # print("Sheets", len(my_wb.sheet_names()))
 
     # 
-    # print('File Date' , date_list)
+    print('File Dates', date_list)
+    print('File List', file_list)
     # print('rene',app_cfg['XLS_RENEWALS'])
     #
     #
@@ -74,4 +87,5 @@ def check_update_files(run_dir=app_cfg['UPDATES_DIR']):
 if __name__ == "__main__" and __package__ is None:
     print('Package Name:', __package__)
     print('running check_update_files')
-    check_update_files(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
+    check_update_files(os.path.join(app_cfg['UPDATES_DIR']))
+    # check_update_files(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
