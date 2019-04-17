@@ -3,7 +3,7 @@ import os
 from my_app.settings import app_cfg
 
 
-def open_wb(excel_file, dir_to_open='working'):
+def open_wb(excel_file):
     #
     # Get settings for file locations and names
     #
