@@ -1,5 +1,6 @@
 from my_app.settings import app_cfg, init_settings
 from my_app.func_lib.push_list_to_xls import push_list_to_xls
+from my_app.func_lib.build_sku_dict import build_sku_dict
 import os
 import xlrd
 import json
@@ -105,55 +106,72 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
     print('\tPath to Run Dir:', path_to_run_dir)
 
     processing_date = date_list[0]
+    file_paths = []
+    bookings = []
+    start_row = 0
     print('We are processing files:')
     for file_name in files_needed:
-        print('\t\t', file_name + '', processing_date + '.xlsx')
+        file_path = file_name + ' ' + processing_date + '.xlsx'
+        file_path = os.path.join(path_to_run_dir, file_path)
+
+        file_paths.append(file_path)
+        my_wb = xlrd.open_workbook(file_path)
+        my_ws = my_wb.sheet_by_index(0)
+        print('\t\t', file_name + '', processing_date + '.xlsx',' has ', my_ws.nrows,' rows and ', my_ws.ncols, 'columns')
+
+        if file_name.find('Bookings') != -1:
+            if start_row == 0:
+                # For the first workbook include the header row
+                start_row = 2
+            elif start_row == 2:
+                # For subsequent workbooks skip the header
+                start_row = 3
+
+            for row in range(start_row, my_ws.nrows):
+                bookings.append(my_ws.row_values(row))
+
+    print('We have ', len(bookings), 'bookings line items')
+    push_list_to_xls(bookings, os.path.join(path_to_run_dir, app_cfg['XLS_BOOKINGS'] + '.xlsx'))
+
+    as_bookings = get_as_skus(bookings)
+    push_list_to_xls(as_bookings, os.path.join(path_to_run_dir, app_cfg['XLS_AS_SKUS'] + '.xlsx'))
     exit()
-
-    # Does the run directory exist ?
-    if not os.path.isdir(path_to_run_dir):
-        print('*********')
-        print('ERROR:', path_to_run_dir, 'does NOT exist')
-        print('*********')
-        exit()
-
-    #
-    # Open up excel workbook
-    #
-    # my_wb = xlrd.open_workbook(path_to_file)
-    # my_sheet = my_wb.sheet_by_index(0)
-
-    # Ok run dir exists check for files needed to run
-    run_files = os.listdir(path_to_run_dir)
-    date_list = []
-    file_list = []
-    for run_file in run_files:
-        # Ignore tmp_files
-        if run_file[0:4] != 'tmp_':
-            print(run_file)
-            date_list.append((run_file[-13:-13 + 8]))
-            file_path = (os.path.join(path_to_run_dir, run_file))
-            file_list.append(file_path)
-            # my_wb = xlrd.open_workbook(file_path)
-            # my_sheet = my_wb.sheet_by_index(1)
-            # print("Sheets", len(my_wb.sheet_names()))
-
-    # 
-    print('File Dates', date_list)
-    print('File List', file_list)
-    # print('rene',app_cfg['XLS_RENEWALS'])
-    #
-    #
-    #
-    #
-    # print('Production Date:', app_cfg['PROD_DATE'])
-    # print('Update Date:', app_cfg['UPDATE_DATE'])
 
     return
 
+
+def get_as_skus(bookings):
+    # Build a SKU dict as a filter
+    tmp_dict = build_sku_dict()
+    sku_dict = {}
+    header_row = bookings[0]
+
+    # Strip out all but Service sku's
+    for sku_key, sku_val in tmp_dict.items():
+        if sku_val[0] == 'Service':
+            sku_dict[sku_key] = sku_val
+
+    sku_col_header = 'Bundle Product ID'
+    sku_col_num = 0
+    as_bookings = [header_row]
+
+    # Get the col number that has the SKU's
+    for idx, val in enumerate(header_row):
+        if val == sku_col_header:
+            sku_col_num = idx
+            break
+
+    # Gather all the rows with AS skus
+    for booking in bookings:
+        if booking[sku_col_num] in sku_dict:
+            as_bookings.append(booking)
+
+    print('All AS SKUs have been extracted from the current data!')
+    return as_bookings
 
 if __name__ == "__main__" and __package__ is None:
     print('Package Name:', __package__)
     print('running check_update_files')
     #file_checks(os.path.join(app_cfg['UPDATES_DIR']))
     file_checks(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
+
