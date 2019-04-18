@@ -6,7 +6,7 @@ import os
 def init_settings():
     # Grab the production file date label
     # Add these filenames to the app_cfg settings dict
-    print('running init settings')
+    # print('running init settings')
     # path_to_main_dir = (os.path.join(app_cfg['HOME'], app_cfg['WORKING_DIR']))
     # path_to_update_dir = (os.path.join(app_cfg['HOME'], app_cfg['WORKING_DIR'], app_cfg['UPDATES_DIR']))
     #
@@ -62,8 +62,13 @@ app_cfg = dict(
     ARCHIVES_DIR='archives',
     PROD_DATE='',
     UPDATE_DATE='',
-    XLS_RENEWALS='TA Master Renewals as of',
-    XLS_BOOKINGS='TA Master Bookings as of',
+    META_DATA_FILE='config_data.json',
+    FY17_RAW_BOOKINGS='FY17 TA Master Bookings as of',
+    FY18_RAW_BOOKINGS='FY18 TA Master Bookings as of',
+    FY19_RAW_BOOKINGS='FY19 TA Master Bookings as of',
+    FY19_RAW_RENEWALS='TA Master Renewals as of',
+    XLS_RENEWALS='TA Master Renewals',
+    XLS_BOOKINGS='TA Master Bookings',
     XLS_CUSTOMER='',
     XLS_ORDER_DETAIL='',
     XLS_ORDER_SUMMARY='',
