@@ -1,9 +1,9 @@
-from my_app.settings import app_cfg
-from my_app.func_lib.push_list_to_xls import push_list_to_xls
-from my_app.func_lib.build_sku_dict import build_sku_dict
 import os
 import xlrd
 import json
+from my_app.settings import app_cfg
+from my_app.func_lib.push_list_to_xls import push_list_to_xls
+from my_app.func_lib.build_sku_dict import build_sku_dict
 
 
 def file_checks(run_dir=app_cfg['UPDATES_DIR']):
@@ -78,8 +78,9 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
 
     # Since we have a consistent date then Create the json file for config_data.json.
     # Put the time_stamp in it
-    config_dict = {'run_time_stamp': base_date}
-    with open(os.path.join(path_to_run_dir, app_cfg['META_DATA_FILE']), 'w') as json_output:
+    config_dict = {'run_time_stamp': base_date,
+                   'path_to_run_dir': path_to_run_dir}
+    with open(os.path.join(path_to_run_dir, app_cfg['META_DATA_FILE']+'.json'), 'w') as json_output:
         json.dump(config_dict, json_output)
 
     # Delete all previous tmp_ files
@@ -128,18 +129,18 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
             for row in range(2, my_ws.nrows):
                 renewals.append(my_ws.row_slice(row))
 
-    push_list_to_xls(bookings,
-                     os.path.join(path_to_run_dir, app_cfg['XLS_BOOKINGS'] + '.xlsx'),
-                     'ta_bookings')
+    # push_list_to_xls(bookings,
+    #                  os.path.join(path_to_run_dir, app_cfg['XLS_BOOKINGS'] + '.xlsx'),
+    #                  'ta_bookings')
 
     as_bookings = get_as_skus(bookings)
     push_list_to_xls(as_bookings,
                      os.path.join(path_to_run_dir, app_cfg['XLS_AS_SKUS'] + '.xlsx'),
                      'as_bookings')
-
-    push_list_to_xls(renewals,
-                     os.path.join(path_to_run_dir, app_cfg['XLS_RENEWALS'] + '.xlsx'),
-                     'ta_renewals')
+    #
+    # push_list_to_xls(renewals,
+    #                  os.path.join(path_to_run_dir, app_cfg['XLS_RENEWALS'] + '.xlsx'),
+    #                  'ta_renewals')
 
     print('We have ', len(bookings), 'bookings line items')
     print('We have ', len(as_bookings), 'Services line items')
@@ -153,6 +154,9 @@ def get_as_skus(bookings):
     tmp_dict = build_sku_dict()
     sku_dict = {}
     header_row = bookings[0]
+    header_vals = []
+    for my_cell in header_row:
+        header_vals.append(my_cell.value)
 
     # Strip out all but Service sku's
     for sku_key, sku_val in tmp_dict.items():
@@ -164,14 +168,14 @@ def get_as_skus(bookings):
     as_bookings = [header_row]
 
     # Get the col number that has the SKU's
-    for idx, val in enumerate(header_row):
+    for idx, val in enumerate(header_vals):
         if val == sku_col_header:
             sku_col_num = idx
             break
 
     # Gather all the rows with AS skus
     for booking in bookings:
-        if booking[sku_col_num] in sku_dict:
+        if booking[sku_col_num].value in sku_dict:
             as_bookings.append(booking)
 
     print('All AS SKUs have been extracted from the current data!')
