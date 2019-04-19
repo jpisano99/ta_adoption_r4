@@ -1,21 +1,9 @@
-from my_app.settings import app_cfg, init_settings
+from my_app.settings import app_cfg
 from my_app.func_lib.push_list_to_xls import push_list_to_xls
 from my_app.func_lib.build_sku_dict import build_sku_dict
 import os
 import xlrd
 import json
-
-
-def prep_raw_files():
-    bookings = []
-    start_row = 2
-    wb = xlrd.open_workbook(file_path)
-    ws = wb.sheet_by_index(0)
-    for row in range(start_row, ws.nrows):
-        bookings.append(ws.row_values(row))
-
-    push_list_to_xls(bookings, 'tmp_working_bookings', 'updates')
-    return
 
 
 def file_checks(run_dir=app_cfg['UPDATES_DIR']):
@@ -24,6 +12,7 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
     update_dir = app_cfg['UPDATES_DIR']
     archive_dir = app_cfg['ARCHIVES_DIR']
 
+    # Check that all key directories exist
     path_to_main_dir = (os.path.join(home, working_dir))
     if not os.path.exists(path_to_main_dir):
         print(path_to_main_dir, " does NOT Exist !")
@@ -44,11 +33,12 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
         print(path_to_archives, " does NOT Exist !")
         exit()
 
+    # OK directories are there any files ?
     if not os.listdir(path_to_run_dir):
         print('Directory', path_to_run_dir, 'contains NO files')
         exit()
 
-    #  Get the required Files
+    #  Get the required Files to begin processing from app_cfg (settings.py)
     files_needed = {}
     # Do we have RAW files to process ?
     for var in app_cfg:
@@ -56,7 +46,7 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
             # Look for any config var containing the word 'RAW'
             files_needed[app_cfg[var]] = 'Missing'
 
-    # See if we have the files and they have consistent dates
+    # See if we have the files_needed are there and they have consistent dates (date_list)
     run_files = os.listdir(path_to_run_dir)
     date_list = []
     for file_needed, status in files_needed.items():
@@ -68,10 +58,17 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
                 files_needed[file_needed] = 'Found'
                 break
 
+    # All time stamps the same ?
     base_date = date_list[0]
     for date_stamp in date_list:
         if date_stamp != base_date:
             print('ERROR: Inconsistent date stamp found')
+            exit()
+
+    # Do we have all the files we need ?
+    for file_name, status in files_needed.items():
+        if status != 'Found':
+            print('ERROR: File ', file_name, 'is missing')
             exit()
 
     # Read the config_dict.json file
@@ -79,37 +76,34 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
     #     config_dict = json.load(json_input)
     # print(config_dict)
 
-    # Since we have a consistent date then Create the json file for config_data.json. Put the time_stamp in it
+    # Since we have a consistent date then Create the json file for config_data.json.
+    # Put the time_stamp in it
     config_dict = {'run_time_stamp': base_date}
     with open(os.path.join(path_to_run_dir, app_cfg['META_DATA_FILE']), 'w') as json_output:
         json.dump(config_dict, json_output)
-
-    for file_name, status in files_needed.items():
-        if status != 'Found':
-            print('ERROR: File ', file_name, 'is missing')
-            exit()
-
-    #
-    # We now have all files to re-create a new set of data
 
     # Delete all previous tmp_ files
     for file_name in run_files:
         if file_name[0:4] == 'tmp_':
             os.remove(os.path.join(path_to_run_dir, file_name))
 
-    # Here is what we have
+    # Here is what we have - All things should be in place
     print('Our directories:')
-
     print('\tPath to Main Dir:', path_to_main_dir)
     print('\tPath to Updates Dir:', path_to_updates)
     print('\tPath to Archives Dir:', path_to_archives)
     print('\tPath to Run Dir:', path_to_run_dir)
 
+    # Process the RAW data (Renewals and Bookings)
+    # Clean up rows, combine multiple Bookings files, add custom table names
     processing_date = date_list[0]
     file_paths = []
     bookings = []
+    renewals = []
     start_row = 0
+    print()
     print('We are processing files:')
+
     for file_name in files_needed:
         file_path = file_name + ' ' + processing_date + '.xlsx'
         file_path = os.path.join(path_to_run_dir, file_path)
@@ -117,7 +111,8 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
         file_paths.append(file_path)
         my_wb = xlrd.open_workbook(file_path)
         my_ws = my_wb.sheet_by_index(0)
-        print('\t\t', file_name + '', processing_date + '.xlsx',' has ', my_ws.nrows,' rows and ', my_ws.ncols, 'columns')
+        print('\t\t', file_name + '', processing_date + '.xlsx', ' has ', my_ws.nrows,
+              ' rows and ', my_ws.ncols, 'columns')
 
         if file_name.find('Bookings') != -1:
             if start_row == 0:
@@ -126,16 +121,29 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
             elif start_row == 2:
                 # For subsequent workbooks skip the header
                 start_row = 3
-
             for row in range(start_row, my_ws.nrows):
-                bookings.append(my_ws.row_values(row))
+                bookings.append(my_ws.row_slice(row))
 
-    print('We have ', len(bookings), 'bookings line items')
-    push_list_to_xls(bookings, os.path.join(path_to_run_dir, app_cfg['XLS_BOOKINGS'] + '.xlsx'))
+        elif file_name.find('Renewals') != -1:
+            for row in range(2, my_ws.nrows):
+                renewals.append(my_ws.row_slice(row))
+
+    push_list_to_xls(bookings,
+                     os.path.join(path_to_run_dir, app_cfg['XLS_BOOKINGS'] + '.xlsx'),
+                     'ta_bookings')
 
     as_bookings = get_as_skus(bookings)
-    push_list_to_xls(as_bookings, os.path.join(path_to_run_dir, app_cfg['XLS_AS_SKUS'] + '.xlsx'))
-    exit()
+    push_list_to_xls(as_bookings,
+                     os.path.join(path_to_run_dir, app_cfg['XLS_AS_SKUS'] + '.xlsx'),
+                     'as_bookings')
+
+    push_list_to_xls(renewals,
+                     os.path.join(path_to_run_dir, app_cfg['XLS_RENEWALS'] + '.xlsx'),
+                     'ta_renewals')
+
+    print('We have ', len(bookings), 'bookings line items')
+    print('We have ', len(as_bookings), 'Services line items')
+    print('We have ', len(renewals), 'renewal line items')
 
     return
 
@@ -169,9 +177,9 @@ def get_as_skus(bookings):
     print('All AS SKUs have been extracted from the current data!')
     return as_bookings
 
+
 if __name__ == "__main__" and __package__ is None:
     print('Package Name:', __package__)
     print('running check_update_files')
-    #file_checks(os.path.join(app_cfg['UPDATES_DIR']))
-    file_checks(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
-
+    file_checks(os.path.join(app_cfg['UPDATES_DIR']))
+    # file_checks(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
