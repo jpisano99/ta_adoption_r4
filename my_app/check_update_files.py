@@ -1,7 +1,7 @@
 import os
 import json
 from my_app.settings import app_cfg
-from my_app.func_lib.push_list_to_xls import push_list_to_xls
+from my_app.func_lib.push_xlrd_to_xls import push_xlrd_to_xls
 from my_app.func_lib.open_wb import open_wb
 from my_app.func_lib.build_sku_dict import build_sku_dict
 
@@ -132,12 +132,12 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
             for row in range(2, my_ws.nrows):
                 renewals.append(my_ws.row_slice(row))
 
-    push_list_to_xls(bookings, app_cfg['XLS_BOOKINGS'], run_dir, 'ta_bookings')
+    push_xlrd_to_xls(bookings, app_cfg['XLS_BOOKINGS'], run_dir, 'ta_bookings')
 
     as_bookings = get_as_skus(bookings)
-    push_list_to_xls(as_bookings, app_cfg['XLS_AS_SKUS'], run_dir, 'as_bookings')
+    push_xlrd_to_xls(as_bookings, app_cfg['XLS_AS_SKUS'], run_dir, 'as_bookings')
 
-    push_list_to_xls(renewals, app_cfg['XLS_RENEWALS'], run_dir, 'ta_renewals')
+    push_xlrd_to_xls(renewals, app_cfg['XLS_RENEWALS'], run_dir, 'ta_renewals')
 
     print('We have ', len(bookings), 'bookings line items')
     print('We have ', len(as_bookings), 'Services line items')
