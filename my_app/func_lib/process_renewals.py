@@ -7,12 +7,14 @@ from my_app.func_lib.open_wb import open_wb
 from my_app.func_lib.build_sheet_map import build_sheet_map
 
 
-def process_renewals():
+def process_renewals(run_dir=app_cfg["UPDATES_DIR"]):
+    print('MAPPING>>>>>>>>>> ', run_dir + '\\' + app_cfg['XLS_RENEWALS'])
     # Open up the renewals excel workbooks
-    wb, sheet = open_wb(app_cfg['XLS_RENEWALS'], 'updates')
+
+    wb, sheet = open_wb(app_cfg['XLS_RENEWALS'], run_dir)
 
     # Get the renewal columns we are looking for
-    my_map = build_sheet_map(app_cfg['XLS_RENEWALS'], sheet_map, 'XLS_RENEWALS')
+    my_map = build_sheet_map(app_cfg['XLS_RENEWALS'], sheet_map, 'XLS_RENEWALS', run_dir)
 
     print('sheet_map ', id(sheet_map))
     print('my map ', id(my_map))

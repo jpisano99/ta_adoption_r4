@@ -1,12 +1,21 @@
 import xlsxwriter
 import xlrd
+import os
+from my_app.settings import app_cfg
 
 
-def push_list_to_xls(my_list, path_to_xls, tbl_name='table1'):
+def push_list_to_xls(my_list, excel_file, run_dir=app_cfg['UPDATES_DIR'], tbl_name='table1'):
+    home = app_cfg['HOME']
+    working_dir = app_cfg['WORKING_DIR']
+    path_to_run_dir = (os.path.join(home, working_dir, run_dir, excel_file))
+    print('CREATING>>>>>>>>>> ', path_to_run_dir)
+    # path_to_run_dir is a fully qualified path (ie)
+    #    C:\Users\Jim\ta_adoption_data\ta_data_updates
+
     #
     # Write the Excel File
     #
-    workbook = xlsxwriter.Workbook(path_to_xls)
+    workbook = xlsxwriter.Workbook(path_to_run_dir)
     worksheet = workbook.add_worksheet()
 
     # Some ways we could add custom formats - testing

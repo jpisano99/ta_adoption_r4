@@ -1,8 +1,12 @@
 from my_app.func_lib.open_wb import open_wb
 from my_app.ss_lib.Ssheet_class import Ssheet
+from my_app.settings import app_cfg
+import os
 
 
-def build_sheet_map(file_name, my_map, tag):
+def build_sheet_map(file_name, my_map, tag, run_dir=app_cfg["UPDATES_DIR"]):
+    print('MAPPING>>>>>>>>>> ', run_dir + '\\' + file_name)
+
     # First look and the tag and decide if we looking at
     # A local excel sheet or Smart Sheet
     if tag[:2] == 'SS':
@@ -23,7 +27,7 @@ def build_sheet_map(file_name, my_map, tag):
                     val[2] = ss_col_num
 
     elif tag[:3] == 'XLS':
-        workbook, sheet = open_wb(file_name, 'updates')
+        workbook, sheet = open_wb(file_name, run_dir)
         # Loop across all column headings in the bookings file and
         # Find the column number that matches the col_name in my_dict
         for wb_col_num in range(sheet.ncols):

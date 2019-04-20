@@ -1,8 +1,8 @@
 import os
-import xlrd
 import json
 from my_app.settings import app_cfg
 from my_app.func_lib.push_list_to_xls import push_list_to_xls
+from my_app.func_lib.open_wb import open_wb
 from my_app.func_lib.build_sku_dict import build_sku_dict
 
 
@@ -19,6 +19,7 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
         exit()
 
     path_to_run_dir = (os.path.join(home, working_dir, run_dir))
+
     if not os.path.exists(path_to_run_dir):
         print(path_to_run_dir, " does NOT Exist !")
         exit()
@@ -78,9 +79,9 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
 
     # Since we have a consistent date then Create the json file for config_data.json.
     # Put the time_stamp in it
-    config_dict = {'run_time_stamp': base_date,
-                   'path_to_run_dir': path_to_run_dir}
-    with open(os.path.join(path_to_run_dir, app_cfg['META_DATA_FILE']+'.json'), 'w') as json_output:
+    config_dict = {'data_time_stamp': base_date,
+                   'last_run_dir': path_to_run_dir}
+    with open(os.path.join(path_to_run_dir, app_cfg['META_DATA_FILE']), 'w') as json_output:
         json.dump(config_dict, json_output)
 
     # Delete all previous tmp_ files
@@ -110,8 +111,10 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
         file_path = os.path.join(path_to_run_dir, file_path)
 
         file_paths.append(file_path)
-        my_wb = xlrd.open_workbook(file_path)
-        my_ws = my_wb.sheet_by_index(0)
+
+        my_wb, my_ws = open_wb(file_name + ' ' + processing_date + '.xlsx', run_dir)
+        # my_wb = xlrd.open_workbook(file_path)
+        # my_ws = my_wb.sheet_by_index(0)
         print('\t\t', file_name + '', processing_date + '.xlsx', ' has ', my_ws.nrows,
               ' rows and ', my_ws.ncols, 'columns')
 
@@ -129,18 +132,12 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
             for row in range(2, my_ws.nrows):
                 renewals.append(my_ws.row_slice(row))
 
-    # push_list_to_xls(bookings,
-    #                  os.path.join(path_to_run_dir, app_cfg['XLS_BOOKINGS'] + '.xlsx'),
-    #                  'ta_bookings')
+    push_list_to_xls(bookings, app_cfg['XLS_BOOKINGS'], run_dir, 'ta_bookings')
 
     as_bookings = get_as_skus(bookings)
-    push_list_to_xls(as_bookings,
-                     os.path.join(path_to_run_dir, app_cfg['XLS_AS_SKUS'] + '.xlsx'),
-                     'as_bookings')
-    #
-    # push_list_to_xls(renewals,
-    #                  os.path.join(path_to_run_dir, app_cfg['XLS_RENEWALS'] + '.xlsx'),
-    #                  'ta_renewals')
+    push_list_to_xls(as_bookings, app_cfg['XLS_AS_SKUS'], run_dir, 'as_bookings')
+
+    push_list_to_xls(renewals, app_cfg['XLS_RENEWALS'], run_dir, 'ta_renewals')
 
     print('We have ', len(bookings), 'bookings line items')
     print('We have ', len(as_bookings), 'Services line items')
@@ -186,4 +183,5 @@ if __name__ == "__main__" and __package__ is None:
     print('Package Name:', __package__)
     print('running check_update_files')
     file_checks(os.path.join(app_cfg['UPDATES_DIR']))
+    # file_checks()
     # file_checks(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))

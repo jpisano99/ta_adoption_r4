@@ -20,16 +20,19 @@ def process_bookings(run_dir=app_cfg['UPDATES_DIR']):
     working_dir = app_cfg['WORKING_DIR']
     path_to_run_dir = (os.path.join(home, working_dir, run_dir))
 
-    master_bookings = os.path.join(path_to_run_dir, app_cfg['XLS_BOOKINGS'])+'.xlsx'
-    master_renewals = os.path.join(path_to_run_dir, app_cfg['XLS_RENEWALS'])+'.xlsx'
-    # Read the config_dict.json file
-    with open(os.path.join(path_to_run_dir, app_cfg['META_DATA_FILE']+'.json')) as json_input:
-        config_dict = json.load(json_input)
-    run_date = datetime.strptime(config_dict['run_time_stamp'], '%m-%d-%y')
+    bookings_path = os.path.join(path_to_run_dir, app_cfg['XLS_BOOKINGS'])
+    renewals_path = os.path.join(path_to_run_dir, app_cfg['XLS_RENEWALS'])
 
-    print(run_date, type(run_date))
-    print(master_bookings)
-    print(master_renewals)
+    # Read the config_dict.json file
+    with open(os.path.join(path_to_run_dir, app_cfg['META_DATA_FILE'])) as json_input:
+        config_dict = json.load(json_input)
+    data_time_stamp = datetime.strptime(config_dict['data_time_stamp'], '%m-%d-%y')
+    last_run_dir = config_dict['last_run_dir']
+
+    print("Run Date: ", data_time_stamp, type(data_time_stamp))
+    print('Run Directory:', last_run_dir)
+    print(bookings_path)
+    print(renewals_path)
 
     # Go to Smartsheets and build these two dicts to use reference lookups
     # team_dict: {'sales_levels 1-6':[('PSS','TSA')]}
@@ -40,15 +43,20 @@ def process_bookings(run_dir=app_cfg['UPDATES_DIR']):
     #
     # Open up the bookings excel workbooks
     #
-    wb_bookings, sheet_bookings = open_wb(app_cfg['XLS_BOOKINGS'])
+    wb_bookings, sheet_bookings = open_wb(app_cfg['XLS_BOOKINGS'], run_dir)
 
     # From the current up to date bookings file build a simple list
     # that describes the format of the output file we are creating
     # and the columns we need to add (ie PSS, TSA, Renewal Dates)
 
-    my_sheet_map = build_sheet_map(app_cfg['XLS_BOOKINGS'], sheet_map, 'XLS_BOOKINGS')
-    print('sheet_map ', id(sheet_map))
-    print('my_sheet_map ', id(my_sheet_map))
+    my_sheet_map = build_sheet_map(app_cfg['XLS_BOOKINGS'], sheet_map,
+                                   'XLS_BOOKINGS', run_dir)
+
+    # print('sheet_map ', id(sheet_map))
+    # print('sheet_map ', sheet_map)
+    # print('my_sheet_map ', id(my_sheet_map))
+    # print('my_sheet_map ', my_sheet_map)
+    # exit()
     #
     # init a bunch a variable we need for the main loop
     #
@@ -161,11 +169,11 @@ def process_bookings(run_dir=app_cfg['UPDATES_DIR']):
     #
     # Renewal Analysis
     #
-    renewal_dict = process_renewals()
+    renewal_dict = process_renewals(run_dir)
     for order_row in order_rows[1:]:
         customer = order_row[dest_col_nums['ERP End Customer Name']]
         if customer in renewal_dict:
-            next_renewal_date = datetime.datetime.strptime(renewal_dict[customer][0][0], '%m-%d-%Y')
+            next_renewal_date = datetime.strptime(renewal_dict[customer][0][0], '%m-%d-%Y')
             next_renewal_rev = renewal_dict[customer][0][1]
             next_renewal_qtr = renewal_dict[customer][0][2]
 
@@ -202,14 +210,13 @@ def process_bookings(run_dir=app_cfg['UPDATES_DIR']):
     # Create a simple customer_list
     # Contains a full set of unique sorted customer names
     # Example: customer_list = [[erp_customer_name,end_customer_ultimate], [CustA,CustA]]
-    customer_list = build_customer_list()
+    customer_list = build_customer_list(run_dir)
     print('There are ', len(customer_list), ' unique Customer Names')
 
     # Clean up order_dict to remove:
     # 1.  +/- zero sum orders
     # 2. zero revenue orders
     order_dict, customer_platforms = cleanup_orders(customer_list, order_dict, my_sheet_map)
-
 
     #
     # Create a summary order file out of the order_dict
@@ -226,10 +233,11 @@ def process_bookings(run_dir=app_cfg['UPDATES_DIR']):
     # push_list_to_xls(customer_platforms, 'jim ')
     print('order summary name ', app_cfg['XLS_ORDER_SUMMARY'])
 
-    push_list_to_xls(summary_order_rows, app_cfg['XLS_ORDER_SUMMARY'], 'updates')
-    push_list_to_xls(order_rows, app_cfg['XLS_ORDER_DETAIL'], 'updates')
-    push_list_to_xls(customer_list, app_cfg['XLS_CUSTOMER'], 'updates')
-    push_list_to_xls(trash_rows, app_cfg['XLS_BOOKINGS_TRASH'], 'updates')
+    push_list_to_xls(summary_order_rows, app_cfg['XLS_ORDER_SUMMARY'],
+                     run_dir, 'ta_summary_orders')
+    push_list_to_xls(order_rows, app_cfg['XLS_ORDER_DETAIL'], run_dir, 'ta_order_detail')
+    push_list_to_xls(customer_list, app_cfg['XLS_CUSTOMER'], run_dir, 'ta_customers')
+    push_list_to_xls(trash_rows, app_cfg['XLS_BOOKINGS_TRASH'], run_dir, 'ta_trash_rows')
 
     # exit()
     #
