@@ -3,7 +3,7 @@ import xlrd
 import os
 
 from my_app.settings import app_cfg
-
+from my_app.func_lib.sheet_desc import sheet_map as sm
 from my_app.func_lib.open_wb import open_wb
 from my_app.func_lib.push_list_to_xls import push_list_to_xls
 from my_app.func_lib.create_customer_order_dict import create_customer_order_dict
@@ -15,11 +15,13 @@ from my_app.func_lib.push_xls_to_ss import push_xls_to_ss
 
 
 def build_dashboard(run_dir=app_cfg['UPDATES_DIR']):
+
+
     home = app_cfg['HOME']
     working_dir = app_cfg['WORKING_DIR']
     path_to_run_dir = (os.path.join(home, working_dir, run_dir))
 
-    from my_app.func_lib.sheet_desc import sheet_map
+    # from my_app.func_lib.sheet_desc import sheet_map
     #
     # Open the order summary
     #
@@ -47,8 +49,9 @@ def build_dashboard(run_dir=app_cfg['UPDATES_DIR']):
     print('We have summarized ', len(order_list), ' of interesting line items into')
     print(len(customer_order_dict), ' unique customers')
     print()
+
     # Build Sheet Maps
-    sheet_map = build_sheet_map(app_cfg['SS_CX'], sheet_map, 'SS_CX')
+    sheet_map = build_sheet_map(app_cfg['SS_CX'], sm, 'SS_CX')
     sheet_map = build_sheet_map(app_cfg['SS_AS'], sheet_map, 'SS_AS')
     sheet_map = build_sheet_map(app_cfg['SS_SAAS'], sheet_map, 'SS_SAAS')
 
@@ -59,8 +62,6 @@ def build_dashboard(run_dir=app_cfg['UPDATES_DIR']):
     as_dict = get_linked_sheet_update(sheet_map, 'SS_AS', sheet_keys)
     saas_dict = get_linked_sheet_update(sheet_map, 'SS_SAAS', sheet_keys)
 
-    # print(cx_dict)
-    # exit()
     print()
     print('We have CX Updates: ', len(cx_dict))
     print('We have AS Updates: ', len(as_dict))

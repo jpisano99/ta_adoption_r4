@@ -44,7 +44,7 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
     # Do we have RAW files to process ?
     for var in app_cfg:
         if var.find('RAW') != -1:
-            # Look for any config var containing the word 'RAW'
+            # Look for any config var containing the word 'RAW' and assume they are "Missing'
             files_needed[app_cfg[var]] = 'Missing'
 
     # See if we have the files_needed are there and they have consistent dates (date_list)
@@ -132,6 +132,7 @@ def file_checks(run_dir=app_cfg['UPDATES_DIR']):
             for row in range(2, my_ws.nrows):
                 renewals.append(my_ws.row_slice(row))
 
+    # Push the lists out to an Excel File
     push_xlrd_to_xls(bookings, app_cfg['XLS_BOOKINGS'], run_dir, 'ta_bookings')
 
     as_bookings = get_as_skus(bookings)

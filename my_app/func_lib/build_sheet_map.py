@@ -1,7 +1,6 @@
 from my_app.func_lib.open_wb import open_wb
 from my_app.ss_lib.Ssheet_class import Ssheet
 from my_app.settings import app_cfg
-import os
 
 
 def build_sheet_map(file_name, my_map, tag, run_dir=app_cfg["UPDATES_DIR"]):
