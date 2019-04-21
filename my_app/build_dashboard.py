@@ -1,5 +1,6 @@
 import datetime
 import xlrd
+import os
 
 from my_app.settings import app_cfg
 
@@ -13,13 +14,16 @@ from my_app.func_lib.build_sku_dict import build_sku_dict
 from my_app.func_lib.push_xls_to_ss import push_xls_to_ss
 
 
-def build_dashboard():
-    exit()
+def build_dashboard(run_dir=app_cfg['UPDATES_DIR']):
+    home = app_cfg['HOME']
+    working_dir = app_cfg['WORKING_DIR']
+    path_to_run_dir = (os.path.join(home, working_dir, run_dir))
+
     from my_app.func_lib.sheet_desc import sheet_map
     #
     # Open the order summary
     #
-    wb_orders, sheet_orders = open_wb(app_cfg['XLS_ORDER_SUMMARY'], 'updates')
+    wb_orders, sheet_orders = open_wb(app_cfg['XLS_ORDER_SUMMARY'], run_dir)
 
     # wb_orders, sheet_orders = open_wb('tmp_TA Scrubbed Orders_as_of ' + app_cfg['PROD_DATE'])
 
@@ -228,7 +232,7 @@ def build_dashboard():
     #
     # Write the Dashboard to an Excel File
     #
-    push_list_to_xls(new_rows, app_cfg['XLS_DASHBOARD'], 'updates')
+    push_list_to_xls(new_rows, app_cfg['XLS_DASHBOARD'], run_dir,'ta_dashboard')
     # push_xls_to_ss(app_cfg['XLS_DASHBOARD']+'_as_of_01_31_2019.xlsx', 'jims dash')
 
     return
