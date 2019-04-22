@@ -439,9 +439,9 @@ def phase_3(run_dir=app_cfg['UPDATES_DIR']):
     print()
 
     # Build Sheet Maps
-    sheet_map = build_sheet_map(app_cfg['SS_CX'], sm, 'SS_CX')
-    sheet_map = build_sheet_map(app_cfg['SS_AS'], sheet_map, 'SS_AS')
-    sheet_map = build_sheet_map(app_cfg['SS_SAAS'], sheet_map, 'SS_SAAS')
+    sheet_map = build_sheet_map(app_cfg['SS_CX'], sm, 'SS_CX', run_dir)
+    sheet_map = build_sheet_map(app_cfg['SS_AS'], sheet_map, 'SS_AS', run_dir)
+    sheet_map = build_sheet_map(app_cfg['SS_SAAS'], sheet_map, 'SS_SAAS', run_dir)
 
     #
     # Get dict updates from linked sheets CX/AS/SAAS
@@ -666,9 +666,13 @@ def get_as_skus(bookings):
 if __name__ == "__main__" and __package__ is None:
     print('Package Name:', __package__)
     print('running check_update_files')
-    phase_1(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
-    phase_2(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
-    phase_3(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
+    # phase_1(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
+    # phase_2(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
+    # phase_3(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
+    phase_1()
+    phase_2()
+    phase_3()
+
     #file_checks(os.path.join(app_cfg['UPDATES_DIR']))
     # file_checks()
     # file_checks(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))

@@ -5,7 +5,7 @@ from my_app.func_lib.open_wb import open_wb
 
 
 def build_customer_list(run_dir):
-    my_map = build_sheet_map(app_cfg['XLS_BOOKINGS'], sheet_map, 'XLS_BOOKINGS')
+    my_map = build_sheet_map(app_cfg['XLS_BOOKINGS'], sheet_map, 'XLS_BOOKINGS', run_dir)
 
     wb_bookings, sheet_bookings = open_wb(app_cfg['XLS_BOOKINGS'], run_dir)
     customer_list = []
