@@ -15,8 +15,6 @@ from my_app.func_lib.push_xls_to_ss import push_xls_to_ss
 
 
 def build_dashboard(run_dir=app_cfg['UPDATES_DIR']):
-
-
     home = app_cfg['HOME']
     working_dir = app_cfg['WORKING_DIR']
     path_to_run_dir = (os.path.join(home, working_dir, run_dir))
