@@ -115,6 +115,7 @@ def phase_1(run_dir=app_cfg['UPDATES_DIR']):
     file_paths = []
     bookings = []
     renewals = []
+    subscriptions = []
     start_row = 0
     print()
     print('We are processing files:')
@@ -141,6 +142,10 @@ def phase_1(run_dir=app_cfg['UPDATES_DIR']):
             for row in range(start_row, my_ws.nrows):
                 bookings.append(my_ws.row_slice(row))
 
+        elif file_name.find('Subscriptions') != -1:
+            for row in range(0, my_ws.nrows):
+                subscriptions.append(my_ws.row_slice(row))
+
         elif file_name.find('Renewals') != -1:
             for row in range(2, my_ws.nrows):
                 renewals.append(my_ws.row_slice(row))
@@ -152,10 +157,12 @@ def phase_1(run_dir=app_cfg['UPDATES_DIR']):
     push_xlrd_to_xls(as_bookings, app_cfg['XLS_AS_SKUS'], run_dir, 'as_bookings')
 
     push_xlrd_to_xls(renewals, app_cfg['XLS_RENEWALS'], run_dir, 'ta_renewals')
+    push_xlrd_to_xls(subscriptions, app_cfg['XLS_SUBSCRIPTIONS'], run_dir, 'ta_subscriptions')
 
     print('We have ', len(bookings), 'bookings line items')
     print('We have ', len(as_bookings), 'Services line items')
     print('We have ', len(renewals), 'renewal line items')
+    print('We have ', len(subscriptions), 'subscription line items')
     return
 
 ##################
@@ -670,6 +677,7 @@ if __name__ == "__main__" and __package__ is None:
     # phase_2(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
     # phase_3(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
     phase_1()
+    exit()
     phase_2()
     phase_3()
 

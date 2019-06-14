@@ -50,7 +50,7 @@ def push_list_to_xls(my_list, excel_file, run_dir=app_cfg['UPDATES_DIR'], tbl_na
         col_list.append(col_desc)
 
     # Make a table of our data (handy for PowerBI
-    worksheet.add_table(0, 0, row_num + 1, col_num, {'header_row': True,
+    worksheet.add_table(0, 0, row_num, col_num, {'header_row': True,
                                                      'name': tbl_name,
                                                      'columns': col_list})
 
