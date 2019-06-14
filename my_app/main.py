@@ -9,6 +9,7 @@ from my_app.func_lib.build_coverage_dict import build_coverage_dict
 from my_app.func_lib.build_sku_dict import build_sku_dict
 from my_app.func_lib.find_team import find_team
 from my_app.func_lib.process_renewals import process_renewals
+from my_app.func_lib.process_subscriptions import process_subs
 from my_app.func_lib.build_customer_list import build_customer_list
 from my_app.func_lib.cleanup_orders import cleanup_orders
 from my_app.func_lib.sheet_desc import sheet_map as sm
@@ -76,13 +77,13 @@ def phase_1(run_dir=app_cfg['UPDATES_DIR']):
     base_date = date_list[0]
     for date_stamp in date_list:
         if date_stamp != base_date:
-            print('ERROR: Inconsistent date stamp found')
+            print('ERROR: Inconsistent date stamp(s) found')
             exit()
 
     # Do we have all the files we need ?
     for file_name, status in files_needed.items():
         if status != 'Found':
-            print('ERROR: File ', file_name, 'is missing')
+            print("ERROR: Filename ", "'"+file_name, "MM-DD-YY'  is missing from directory", "'"+run_dir+"'")
             exit()
 
     # Read the config_dict.json file
@@ -172,6 +173,7 @@ def phase_1(run_dir=app_cfg['UPDATES_DIR']):
 ##################
 # Start of Phase 2
 ##################
+
 
 def phase_2(run_dir=app_cfg['UPDATES_DIR']):
     home = app_cfg['HOME']
@@ -323,6 +325,40 @@ def phase_2(run_dir=app_cfg['UPDATES_DIR']):
     #
     # End of main loop
     #
+
+
+
+    #
+    # Under Construction
+    #
+
+    #
+    # Subscription Analysis
+    #
+    subs_dict = process_subs(run_dir)
+    for order_row in order_rows[1:]:
+        customer = order_row[dest_col_nums['ERP End Customer Name']]
+        if customer in subs_dict:
+            next_renewal_date = datetime.datetime.strptime(subs_dict[customer][0][0], '%m-%d-%Y')
+            next_renewal_rev = subs_dict[customer][0][1]
+            next_renewal_qtr = subs_dict[customer][0][2]
+
+            order_row[dest_col_nums['Renewal Date']] = next_renewal_date
+            order_row[dest_col_nums['Product Bookings']] = next_renewal_rev
+            order_row[dest_col_nums['Fiscal Quarter ID']] = next_renewal_qtr
+
+            if len(subs_dict[customer]) > 1:
+                renewal_comments = '+' + str(len(subs_dict[customer])-1) + ' more renewal(s)'
+                order_row[dest_col_nums['Renewal Comments']] = renewal_comments
+
+
+
+    #
+    # End of  Construction Zone
+    #
+
+
+
 
     #
     # Renewal Analysis
@@ -677,7 +713,6 @@ if __name__ == "__main__" and __package__ is None:
     # phase_2(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
     # phase_3(os.path.join(app_cfg['ARCHIVES_DIR'], '04-04-19 Updates'))
     phase_1()
-    exit()
     phase_2()
     phase_3()
 

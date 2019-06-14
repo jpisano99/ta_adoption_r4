@@ -16,6 +16,13 @@ sheet_map = [['ERP End Customer Name', 'XLS_BOOKINGS', -1, 'Customer Name'],
              ['Comments', 'SS_CX', -1, 'CX Next Steps'],
              # ['CuSM Name', 'SS_CX', -1, 'CX Contact'],
              # ['Next Action', 'SS_CX', -1, 'CX Next Steps'],
+
+             ['Start Date', 'XLS_SUBSCRIPTIONS', -1, 'Sub Start'],
+             ['Initial Term', 'XLS_SUBSCRIPTIONS', -1, 'Sub Initial Term'],
+             ['Status', 'XLS_SUBSCRIPTIONS', -1, 'Sub Status'],
+             # ['Renewal Date', 'XLS_SUBSCRIPTIONS', -1, 'Sub Renew Date'],
+
+
              ['Renewal Date', 'XLS_RENEWALS', -1, ' Next Renewal Date'],
              ['Product Bookings', 'XLS_RENEWALS', -1, 'Next Renewal Revenue'],
              ['Fiscal Quarter ID', 'XLS_RENEWALS', -1, 'Next Renewal Qtr'],
