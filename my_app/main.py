@@ -1,7 +1,9 @@
 import datetime
+# from datetime import datetime
 import os
 import json
 import xlrd
+import time
 from my_app.settings import app_cfg
 from my_app.func_lib.push_xlrd_to_xls import push_xlrd_to_xls
 from my_app.func_lib.open_wb import open_wb
@@ -18,6 +20,7 @@ from my_app.func_lib.create_customer_order_dict import create_customer_order_dic
 from my_app.func_lib.get_linked_sheet_update import get_linked_sheet_update
 from my_app.func_lib.build_sheet_map import build_sheet_map
 from my_app.func_lib.sheet_desc import sheet_map, sheet_keys
+from my_app.func_lib.data_scrubber import data_scrubber
 
 
 def phase_1(run_dir=app_cfg['UPDATES_DIR']):
@@ -144,10 +147,21 @@ def phase_1(run_dir=app_cfg['UPDATES_DIR']):
                 bookings.append(my_ws.row_slice(row))
 
         elif file_name.find('Subscriptions') != -1:
+            # This raw sheet starts on row num 0
+
             for row in range(0, my_ws.nrows):
                 subscriptions.append(my_ws.row_slice(row))
 
+
+            #
+            # scrub_this = os.path.join(path_to_main_dir, run_dir,
+            #                           app_cfg['FY19_RAW_SUBSCRIPTIONS'] + ' ' + processing_date + '.xlsx')
+            # print(scrub_this)
+            # exit()
+            # data_scrubber(my_wb, my_ws, scrub_this)
+
         elif file_name.find('Renewals') != -1:
+            # This raw sheet starts on row num 2
             for row in range(2, my_ws.nrows):
                 renewals.append(my_ws.row_slice(row))
 
@@ -158,6 +172,7 @@ def phase_1(run_dir=app_cfg['UPDATES_DIR']):
     push_xlrd_to_xls(as_bookings, app_cfg['XLS_AS_SKUS'], run_dir, 'as_bookings')
 
     push_xlrd_to_xls(renewals, app_cfg['XLS_RENEWALS'], run_dir, 'ta_renewals')
+
     push_xlrd_to_xls(subscriptions, app_cfg['XLS_SUBSCRIPTIONS'], run_dir, 'ta_subscriptions')
 
     print('We have ', len(bookings), 'bookings line items')
@@ -335,20 +350,29 @@ def phase_2(run_dir=app_cfg['UPDATES_DIR']):
     #
     # Subscription Analysis
     #
-    subs_dict = process_subs(run_dir)
+    subs_sorted_dict, subs__summary_dict = process_subs(run_dir)
     for order_row in order_rows[1:]:
         customer = order_row[dest_col_nums['ERP End Customer Name']]
-        if customer in subs_dict:
-            next_renewal_date = datetime.datetime.strptime(subs_dict[customer][0][0], '%m-%d-%Y')
-            next_renewal_rev = subs_dict[customer][0][1]
-            next_renewal_qtr = subs_dict[customer][0][2]
+        if customer in subs_sorted_dict:
+            # print(customer, subs_dict[customer])
+            sub_start_date = datetime.datetime.strptime(subs_sorted_dict[customer][0][0], '%m-%d-%Y')
+            sub_initial_term = subs_sorted_dict[customer][0][1]
+            sub_renewal_date = datetime.datetime.strptime(subs_sorted_dict[customer][0][2], '%m-%d-%Y')
+            sub_days_to_renew = subs_sorted_dict[customer][0][3]
+            sub_monthly_charge = subs_sorted_dict[customer][0][4]
+            sub_id = subs_sorted_dict[customer][0][5]
+            sub_status = subs_sorted_dict[customer][0][6]
 
-            order_row[dest_col_nums['Renewal Date']] = next_renewal_date
-            order_row[dest_col_nums['Product Bookings']] = next_renewal_rev
-            order_row[dest_col_nums['Fiscal Quarter ID']] = next_renewal_qtr
+            order_row[dest_col_nums['Start Date']] = sub_start_date
+            order_row[dest_col_nums['Initial Term']] = sub_initial_term
+            order_row[dest_col_nums['Renewal Date']] = sub_renewal_date
+            order_row[dest_col_nums['Days Until Renewal']] = sub_days_to_renew
+            order_row[dest_col_nums['Monthly Charge']] = sub_monthly_charge
+            order_row[dest_col_nums['Subscription ID']] = sub_id
+            order_row[dest_col_nums['Status']] = sub_status
 
-            if len(subs_dict[customer]) > 1:
-                renewal_comments = '+' + str(len(subs_dict[customer])-1) + ' more renewal(s)'
+            if len(subs_sorted_dict[customer]) > 1:
+                renewal_comments = '+' + str(len(subs_sorted_dict[customer])-1) + ' more renewal(s)'
                 order_row[dest_col_nums['Renewal Comments']] = renewal_comments
 
 
@@ -363,21 +387,21 @@ def phase_2(run_dir=app_cfg['UPDATES_DIR']):
     #
     # Renewal Analysis
     #
-    renewal_dict = process_renewals(run_dir)
-    for order_row in order_rows[1:]:
-        customer = order_row[dest_col_nums['ERP End Customer Name']]
-        if customer in renewal_dict:
-            next_renewal_date = datetime.datetime.strptime(renewal_dict[customer][0][0], '%m-%d-%Y')
-            next_renewal_rev = renewal_dict[customer][0][1]
-            next_renewal_qtr = renewal_dict[customer][0][2]
-
-            order_row[dest_col_nums['Renewal Date']] = next_renewal_date
-            order_row[dest_col_nums['Product Bookings']] = next_renewal_rev
-            order_row[dest_col_nums['Fiscal Quarter ID']] = next_renewal_qtr
-
-            if len(renewal_dict[customer]) > 1:
-                renewal_comments = '+' + str(len(renewal_dict[customer])-1) + ' more renewal(s)'
-                order_row[dest_col_nums['Renewal Comments']] = renewal_comments
+    # renewal_dict = process_renewals(run_dir)
+    # for order_row in order_rows[1:]:
+    #     customer = order_row[dest_col_nums['ERP End Customer Name']]
+    #     if customer in renewal_dict:
+    #         next_renewal_date = datetime.datetime.strptime(renewal_dict[customer][0][0], '%m-%d-%Y')
+    #         next_renewal_rev = renewal_dict[customer][0][1]
+    #         next_renewal_qtr = renewal_dict[customer][0][2]
+    #
+    #         order_row[dest_col_nums['Renewal Date']] = next_renewal_date
+    #         order_row[dest_col_nums['Product Bookings']] = next_renewal_rev
+    #         order_row[dest_col_nums['Fiscal Quarter ID']] = next_renewal_qtr
+    #
+    #         if len(renewal_dict[customer]) > 1:
+    #             renewal_comments = '+' + str(len(renewal_dict[customer])-1) + ' more renewal(s)'
+    #             order_row[dest_col_nums['Renewal Comments']] = renewal_comments
 
     # Now we build a an order dict
     # Let's organize as this

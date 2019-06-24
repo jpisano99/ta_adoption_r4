@@ -1,5 +1,6 @@
 from datetime import datetime
 import datetime
+import time
 import xlrd
 from my_app.settings import app_cfg
 from my_app.func_lib.sheet_desc import sheet_map
@@ -22,11 +23,9 @@ def process_subs(run_dir=app_cfg["UPDATES_DIR"]):
     # List comprehension replacement for above
     # Strip out the columns from the sheet map that we don't need
     my_map = [x for x in my_map if x[1] == 'XLS_SUBSCRIPTIONS']
-    print(my_map)
 
     # Create a simple column name dict
     col_nums = {sheet.cell_value(0, col_num): col_num for col_num in range(0, sheet.ncols)}
-    print(col_nums)
 
     # Loop over all of the subscription records
     # Build a dict of {customer:[next renewal date, next renewal revenue, upcoming renewals]}
@@ -55,23 +54,25 @@ def process_subs(run_dir=app_cfg["UPDATES_DIR"]):
         tmp_records.append(tmp_record)
         my_dict[customer] = tmp_records
 
-    print()
-    print('diag',my_dict['BLUE CROSS & BLUE SHIELD OF ALABAMA'])
-    print()
-    print('diag', my_dict['BARCLAYS CAPITAL INC.'])
-    print()
-
     #
     # Sort each customers renewal dates
     #
     sorted_dict = {}
     summarized_dict = {}
     summarized_rec = []
+    # print('diag1',my_dict['BLUE CROSS & BLUE SHIELD OF ALABAMA'])
+    # exit()
+    # ['08-20-2018', '12', '08-20-2019', 72.0, 1500.0, 'Sub170034', 'ACTIVE']
 
     for customer, renewals in my_dict.items():
         # Sort this customers renewal records by date order
-        renewals.sort(key=lambda x: x[0])
+        renewals.sort(key=lambda x: datetime.datetime.strptime(x[0], '%m-%d-%Y'))
         sorted_dict[customer] = renewals
+        #
+        # print('\t', customer, ' has', len(renewals), ' records')
+        # print('\t\t', renewals)
+        # print ('---------------------')
+        # time.sleep(1)
 
         next_renewal_date = renewals[0][0]
         next_renewal_rev = 0
@@ -79,7 +80,9 @@ def process_subs(run_dir=app_cfg["UPDATES_DIR"]):
         for renewal_rec in renewals:
             if renewal_rec[0] == next_renewal_date:
                 # Tally this renewal record and get the next
-                next_renewal_rev = float(renewal_rec[1] + next_renewal_rev)
+                # print (type(renewal_rec[4]), renewal_rec[4])
+                # time.sleep(1)
+                next_renewal_rev = renewal_rec[4] + next_renewal_rev
             elif renewal_rec[0] != next_renewal_date:
                 # Record these summarized values
                 summarized_rec.append([next_renewal_date, next_renewal_rev, next_renewal_qtr])
@@ -95,11 +98,9 @@ def process_subs(run_dir=app_cfg["UPDATES_DIR"]):
 
         summarized_rec.append([next_renewal_date, next_renewal_rev, next_renewal_qtr])
         summarized_dict[customer] = summarized_rec
-        if customer == 'BLUE CROSS & BLUE SHIELD OF ALABAMA':
-            print('summary diag' ,summarized_dict[customer])
         summarized_rec = []
 
     # print(sorted_dict['FIRST NATIONAL BANK OF SOUTHERN AFRICA LTD'])
     # print(summarized_dict['SPECTRUM HEALTH SYSTEM'])
     # print (len(summarized_dict['SPECTRUM HEALTH SYSTEM']))
-    return summarized_dict
+    return sorted_dict, summarized_dict
