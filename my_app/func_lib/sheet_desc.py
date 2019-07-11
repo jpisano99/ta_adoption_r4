@@ -17,22 +17,18 @@ sheet_map = [['ERP End Customer Name', 'XLS_BOOKINGS', -1, 'Customer Name'],
              # ['CuSM Name', 'SS_CX', -1, 'CX Contact'],
              # ['Next Action', 'SS_CX', -1, 'CX Next Steps'],
 
-
-             ['Start Date', 'XLS_SUBSCRIPTIONS', -1, 'Sub Start', 'date'],
-             ['Initial Term', 'XLS_SUBSCRIPTIONS', -1, 'Sub Initial Term', 'int'],
-             ['Renewal Date', 'XLS_SUBSCRIPTIONS', -1, 'Sub Renew', 'date'],
-             ['Days Until Renewal', 'XLS_SUBSCRIPTIONS', -1, 'Sub Days till Renewal', 'int'],
-             ['Monthly Charge', 'XLS_SUBSCRIPTIONS', -1, 'Sub Monthly Rev', 'currency'],
-             ['Subscription ID', 'XLS_SUBSCRIPTIONS', -1, 'Sub ID', 'text'],
-             ['Status', 'XLS_SUBSCRIPTIONS', -1, 'Sub Status' , 'text'],
+             ['Start Date', 'XLS_SUBSCRIPTIONS', -1, 'Subscription Start', 'date'],
+             ['Initial Term', 'XLS_SUBSCRIPTIONS', -1, 'Subscription Initial Term', 'int'],
+             ['Renewal Date', 'XLS_SUBSCRIPTIONS', -1, 'Renewal Date', 'date'],
+             ['Days Until Renewal', 'XLS_SUBSCRIPTIONS', -1, 'Days to Renewal', 'int'],
+             ['Monthly Charge', 'XLS_SUBSCRIPTIONS', -1, 'Monthly Rev', 'currency'],
+             ['Subscription ID', 'XLS_SUBSCRIPTIONS', -1, 'Subscription ID', 'text'],
+             ['Status', 'XLS_SUBSCRIPTIONS', -1, 'Subscription Status', 'text'],
 
              # ['Renewal Date', 'XLS_SUBSCRIPTIONS', -1, 'Sub Renew Date'],
-
-
              # ['Renewal Date', 'XLS_RENEWALS', -1, ' Next Renewal Date'],
              # ['Product Bookings', 'XLS_RENEWALS', -1, 'Next Renewal Revenue'],
              # ['Fiscal Quarter ID', 'XLS_RENEWALS', -1, 'Next Renewal Qtr'],
-
 
              ['Renewal Comments', '', -1, ''],
              ['Orders Found', '', -1, ''],
